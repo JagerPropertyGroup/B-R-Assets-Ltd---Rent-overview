@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B&R Assets — Rent Dashboard 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #0f0f0f;
+  --ink2: #383838;
+  --ink3: #888;
+  --paper: #f4f2ed;
+  --card: #ffffff;
+  --accent: #18362a;
+  --accent-light: #2d6048;
+  --accent-dim: rgba(24,54,42,0.08);
+  --ok: #1a7a44;
+  --ok-bg: #e6f4ec;
+  --warn: #b87400;
+  --warn-bg: #fdf5e0;
+  --danger: #c0311f;
+  --danger-bg: #fceae7;
+  --neutral: #888;
+  --neutral-bg: #f0ede8;
+  --border: #ddd9d2;
+  --border2: #e8e4de;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Plus Jakarta Sans', sans-serif;
+  --r: 10px;
+  --r-lg: 16px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--sans); background: var(--paper); color: var(--ink); min-height: 100vh; font-size: 14px; line-height: 1.5; }
+
+/* ── Layout ── */
+.shell { display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--accent);
+  color: #fff;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+.sidebar-header {
+  padding: 22px 18px 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  flex-shrink: 0;
+}
+.sidebar-header .logo { font-size: 16px; font-weight: 800; letter-spacing: -0.5px; }
+.sidebar-header .sub { font-size: 10px; color: rgba(255,255,255,0.45); margin-top: 3px; font-family: var(--mono); }
+.month-nav { flex: 1; overflow-y: auto; padding: 10px 8px; }
+.month-nav::-webkit-scrollbar { width: 0; }
+.month-btn {
+  display: flex; justify-content: space-between; align-items: center;
+  width: 100%; text-align: left;
+  background: none; border: none;
+  color: rgba(255,255,255,0.6);
+  font-family: var(--sans); font-size: 13px; font-weight: 500;
+  padding: 7px 10px; border-radius: 7px;
+  cursor: pointer; transition: all 0.12s;
+  margin-bottom: 1px;
+}
+.month-btn:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.month-btn.active { background: rgba(255,255,255,0.16); color: #fff; font-weight: 700; }
+.month-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255,255,255,0.15); flex-shrink: 0; transition: background 0.2s; }
+.month-dot.has-data { background: #5ecb8a; }
+.month-dot.partial { background: #f0c060; }
+
+.main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.main::-webkit-scrollbar { width: 6px; }
+.main::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Topbar ── */
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  background: var(--paper);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 26px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.topbar h1 { font-size: 18px; font-weight: 800; letter-spacing: -0.5px; white-space: nowrap; }
+.topbar-right { display: flex; gap: 8px; align-items: center; }
+.btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 700;
+  padding: 7px 14px; border-radius: 8px; border: none;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { background: var(--card); color: var(--ink); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--paper); }
+
+/* ── Summary strip ── */
+.summary-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; padding: 18px 26px 0; }
+.scard {
+  background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-lg);
+  padding: 14px 16px;
+}
+.scard .label { font-size: 10px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 5px; }
+.scard .val { font-family: var(--mono); font-size: 18px; font-weight: 500; }
+.scard .sub { font-family: var(--mono); font-size: 10px; color: var(--ink3); margin-top: 3px; }
+.scard.ok .val { color: var(--ok); }
+.scard.warn .val { color: var(--warn); }
+.scard.danger .val { color: var(--danger); }
+
+/* ── Tabs ── */
+.tabs { display: flex; gap: 4px; padding: 16px 26px 0; }
+.tab-btn {
+  font-family: var(--sans); font-size: 12px; font-weight: 700;
+  padding: 6px 14px; border-radius: 7px;
+  border: 1px solid transparent; cursor: pointer;
+  background: none; color: var(--ink3);
+  transition: all 0.12s;
+}
+.tab-btn.active { background: var(--card); color: var(--ink); border-color: var(--border); }
+.tab-btn:hover:not(.active) { color: var(--ink2); }
+
+/* ── Content ── */
+.content { padding: 14px 26px 50px; }
+
+/* ── Property table ── */
+.section-label {
+  font-size: 10px; font-weight: 700; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: 0.8px;
+  margin: 18px 0 8px; display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--border2); }
+
+.ptable { background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-lg); overflow: hidden; }
+.pthead {
+  display: grid;
+  grid-template-columns: 40px 2.2fr 1fr 1fr 1fr 1fr 80px 90px;
+  padding: 9px 14px;
+  background: var(--paper);
+  border-bottom: 1px solid var(--border2);
+  font-size: 10px; font-weight: 700; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.prow {
+  display: grid;
+  grid-template-columns: 40px 2.2fr 1fr 1fr 1fr 1fr 80px 90px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--border2);
+  align-items: center;
+  cursor: pointer; transition: background 0.1s;
+}
+.prow:last-child { border-bottom: none; }
+.prow:hover { background: #fafaf7; }
+.prow .num { font-family: var(--mono); font-size: 11px; color: var(--ink3); }
+.prow .addr { font-weight: 700; font-size: 12px; display: flex; flex-direction: column; gap: 2px; }
+.prow .addr .badges { display: flex; gap: 4px; }
+.badge {
+  font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 4px;
+  text-transform: uppercase; letter-spacing: 0.3px;
+}
+.badge-mgr { background: #e8edff; color: #3355bb; }
+.badge-stmt { background: #e8f4ec; color: #1a7a44; cursor: pointer; }
+.badge-stmt:hover { background: #c8e8d8; }
+.mono { font-family: var(--mono); font-size: 12px; }
+.pill {
+  font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px;
+  display: inline-block; white-space: nowrap;
+}
+.pill-ok { background: var(--ok-bg); color: var(--ok); }
+.pill-warn { background: var(--warn-bg); color: var(--warn); }
+.pill-danger { background: var(--danger-bg); color: var(--danger); }
+.pill-vacant { background: var(--neutral-bg); color: var(--neutral); }
+.pill-partial { background: var(--warn-bg); color: var(--warn); }
+
+.enter-btn {
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  padding: 5px 11px; border-radius: 6px;
+  border: 1px solid var(--border); background: var(--card);
+  cursor: pointer; transition: background 0.1s;
+}
+.enter-btn:hover { background: var(--paper); }
+
+/* ── Year overview ── */
+.year-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.mcard {
+  background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-lg);
+  padding: 14px 16px; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s;
+}
+.mcard:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.mcard.active { border-color: var(--accent-light); border-width: 2px; }
+.mcard .mname { font-size: 12px; font-weight: 700; color: var(--ink2); }
+.mcard .mvals { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 8px; }
+.mcard .mv-label { font-size: 9px; font-weight: 600; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 2px; }
+.mcard .mv-val { font-family: var(--mono); font-size: 14px; font-weight: 500; }
+.mcard .mv-delta { font-family: var(--mono); font-size: 10px; margin-top: 1px; }
+.delta-up { color: var(--ok); }
+.delta-down { color: var(--danger); }
+.delta-flat { color: var(--ink3); }
+.mcard .mbar { height: 3px; background: var(--border2); border-radius: 2px; overflow: hidden; }
+.mcard .mbar-fill { height: 100%; background: var(--accent-light); border-radius: 2px; transition: width 0.5s; }
+.mcard .mbar-fill.nett { background: #5ecb8a; }
+
+/* ── Modal ── */
+.backdrop {
+  display: none; position: fixed; inset: 0;
+  background: rgba(10,10,10,0.5);
+  z-index: 100; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.backdrop.open { display: flex; }
+.modal {
+  background: var(--card); border-radius: 20px;
+  width: 580px; max-height: 92vh;
+  overflow-y: auto; padding: 28px;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.2);
+}
+.modal::-webkit-scrollbar { width: 4px; }
+.modal::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.modal-hdr { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; }
+.modal-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
+.modal-sub { font-size: 11px; color: var(--ink3); margin-top: 3px; font-family: var(--mono); }
+.x-btn {
+  background: var(--paper); border: none; width: 28px; height: 28px;
+  border-radius: 50%; cursor: pointer; font-size: 16px; color: var(--ink3);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.x-btn:hover { background: var(--border); }
+.fg { margin-bottom: 16px; }
+.flabel {
+  font-size: 11px; font-weight: 700; color: var(--ink3);
+  margin-bottom: 6px; display: flex; justify-content: space-between;
+  text-transform: uppercase; letter-spacing: 0.4px;
+}
+.fi {
+  width: 100%; font-family: var(--mono); font-size: 14px;
+  padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--paper); color: var(--ink); outline: none;
+  transition: border-color 0.15s;
+}
+.fi:focus { border-color: var(--accent-light); background: var(--card); }
+textarea.fi { resize: vertical; min-height: 58px; font-family: var(--sans); font-size: 13px; }
+
+/* Payment rows */
+.pay-rows { }
+.pay-row { display: grid; grid-template-columns: 1fr 130px 28px; gap: 8px; align-items: center; margin-bottom: 7px; }
+.pay-row .fi { margin: 0; }
+.rm-btn { background: none; border: none; color: var(--ink3); cursor: pointer; font-size: 18px; border-radius: 4px; padding: 2px 4px; }
+.rm-btn:hover { background: var(--danger-bg); color: var(--danger); }
+.add-pay-btn {
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  color: var(--accent-light); background: none;
+  border: 1.5px dashed var(--accent-light); border-radius: 7px;
+  padding: 6px 12px; cursor: pointer; width: 100%; margin-top: 4px;
+  opacity: 0.75; transition: opacity 0.15s;
+}
+.add-pay-btn:hover { opacity: 1; }
+
+/* Reconcile box */
+.recon {
+  background: var(--paper); border-radius: var(--r); padding: 14px 16px;
+  margin: 16px 0; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+  border: 1px solid var(--border2);
+}
+.ri .rl { font-size: 10px; font-weight: 700; color: var(--ink3); text-transform: uppercase; letter-spacing: 0.5px; }
+.ri .rv { font-family: var(--mono); font-size: 16px; font-weight: 500; margin-top: 3px; }
+.rv.ok { color: var(--ok); }
+.rv.warn { color: var(--warn); }
+.rv.danger { color: var(--danger); }
+
+/* Drop zone */
+.drop-zone {
+  border: 2px dashed var(--border); border-radius: var(--r);
+  padding: 16px; text-align: center;
+  color: var(--ink3); font-size: 12px; cursor: pointer;
+  transition: all 0.15s; margin-bottom: 16px; position: relative;
+}
+.drop-zone.drag-over { border-color: var(--accent-light); background: var(--accent-dim); color: var(--accent-light); }
+.drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+.drop-icon { font-size: 22px; margin-bottom: 4px; }
+.stmt-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+.stmt-item {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--ok-bg); border-radius: 7px;
+  padding: 8px 12px; font-size: 12px;
+}
+.stmt-item .stmt-name { font-weight: 600; color: var(--ok); flex: 1; }
+.stmt-item .stmt-path { font-family: var(--mono); font-size: 10px; color: var(--ink3); margin-top: 2px; }
+.stmt-item .stmt-rm { background: none; border: none; color: var(--ink3); cursor: pointer; font-size: 14px; }
+.stmt-item .stmt-rm:hover { color: var(--danger); }
+
+.modal-footer { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+
+/* Statement viewer modal */
+.stmt-viewer { max-width: 90vw; width: 720px; }
+.onedrive-path {
+  font-family: var(--mono); font-size: 11px;
+  background: var(--paper); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 8px 12px; color: var(--ink2);
+  word-break: break-all; margin-bottom: 12px;
+}
+.onedrive-path strong { color: var(--accent-light); }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+.charts-section { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-card {
+  background: var(--card); border: 1px solid var(--border2); border-radius: var(--r-lg);
+  padding: 18px 20px;
+}
+.chart-card .chart-title { font-size: 12px; font-weight: 700; color: var(--ink2); margin-bottom: 14px; }
+.chart-card .chart-sub { font-size: 11px; color: var(--ink3); margin-top: 6px; }
+.chart-wide { grid-column: 1 / -1; }
+/* SA link banner */
+.sa-link-banner {
+  background: var(--ok-bg); border: 1px solid #a8dfc0; border-radius: var(--r);
+  padding: 12px 16px; margin-bottom: 12px; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px;
+}
+.sa-link-banner .sa-link-text { font-size: 12px; color: var(--ok); font-weight: 600; }
+.sa-link-banner .sa-link-sub { font-size: 11px; color: var(--ink3); font-weight: 400; margin-top: 2px; }
+.btn-link-all {
+  font-family: var(--sans); font-size: 11px; font-weight: 700;
+  background: var(--ok); color: #fff; border: none;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.btn-link-all:hover { opacity: 0.85; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">B&R Assets</div>
+      <div class="sub">Rent Tracker 2026</div>
+    </div>
+    <nav class="month-nav" id="monthNav"></nav>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+    <div class="topbar">
+      <h1 id="pageTitle">January 2026</h1>
+      <div class="topbar-right">
+        <button class="btn btn-secondary" onclick="exportCSV()">↓ Export CSV</button>
+        <button class="btn btn-primary" onclick="openModal(null)">+ Add payment</button>
+      </div>
+    </div>
+
+    <div class="summary-strip" id="summaryStrip"></div>
+
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('props', this)">Properties</button>
+      <button class="tab-btn" onclick="switchTab('year', this)">Annual Overview</button>
+    </div>
+
+    <div class="content">
+      <div id="tab-props">
+        <div class="section-label">BTL Properties (22)</div>
+        <div class="ptable" id="btlTable"></div>
+        <div class="section-label" style="margin-top:24px">SA Properties (5) <span style="font-weight:400;font-style:italic;color:var(--ink3);text-transform:none;letter-spacing:0">— target as expected</span></div>
+        <div class="ptable" id="saTable"></div>
+      </div>
+      <div id="tab-year" style="display:none">
+        <div style="margin-top:6px"></div>
+        <div class="year-grid" id="yearGrid"></div>
+        <div class="charts-section">
+          <div class="chart-card">
+            <div class="chart-title">Gross rent per month</div>
+            <canvas id="chartBruto" height="180"></canvas>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Net rent per month</div>
+            <canvas id="chartNetto" height="180"></canvas>
+          </div>
+          <div class="chart-card chart-wide">
+            <div class="chart-title">Gross vs net comparison</div>
+            <canvas id="chartCombo" height="140"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Entry Modal -->
+<div class="backdrop" id="backdrop" onclick="closeBackdrop(event)">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title" id="mTitle">Pand</div>
+        <div class="modal-sub" id="mSub"></div>
+      </div>
+      <button class="x-btn" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="fg" id="propSelectorWrap" style="display:none">
+      <div class="flabel">Select property</div>
+      <select class="fi" id="propSelector" onchange="switchProp(this.value)" style="cursor:pointer;font-family:var(--sans)"></select>
+    </div>
+
+    <div class="fg">
+      <div class="flabel">Expected gross rent (£) <span style="font-weight:400;font-style:italic">adjustable per month</span></div>
+      <input type="number" class="fi" id="fExp" placeholder="0.00" oninput="recalc()">
+    </div>
+
+    <div class="fg">
+      <div class="flabel">Payments received <span style="font-weight:400;font-style:italic">label + amount</span></div>
+      <div class="pay-rows" id="payRows"></div>
+      <button class="add-pay-btn" onclick="addPayRow()">+ add payment</button>
+    </div>
+
+    <div class="fg">
+      <div class="flabel">Net rent on statement (£)</div>
+      <input type="number" class="fi" id="fNett" placeholder="0.00" oninput="recalc()">
+    </div>
+
+    <div class="recon" id="recon">
+      <div class="ri"><div class="rl">Gross received</div><div class="rv" id="rBruto">—</div></div>
+      <div class="ri"><div class="rl">vs expected</div><div class="rv" id="rDiff">—</div></div>
+      <div class="ri"><div class="rl">Net (statement)</div><div class="rv" id="rNett2">—</div></div>
+    </div>
+
+    <!-- Statement upload -->
+    <div class="fg">
+      <div class="flabel">Rent statements <span style="font-weight:400;font-style:italic">drag PDF/JPG here</span></div>
+      <div class="stmt-list" id="stmtList"></div>
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" multiple accept=".pdf,.jpg,.jpeg,.png" onchange="handleFiles(this.files)">
+        <div class="drop-icon">📄</div>
+        <div>Drop rent statement(s) here or click to select</div>
+        <div style="margin-top:4px;font-size:10px;opacity:0.7">PDF, JPG or PNG · OneDrive path calculated automatically</div>
+      </div>
+    </div>
+
+    <div class="fg">
+      <div class="flabel">Notes</div>
+      <textarea class="fi" id="fNote" placeholder="E.g. UC paying previous month, council top-up Q2, tenant in arrears..."></textarea>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Statement path viewer -->
+<div class="backdrop" id="stmtBackdrop" onclick="this.classList.remove('open')">
+  <div class="modal stmt-viewer" onclick="event.stopPropagation()">
+    <div class="modal-hdr">
+      <div><div class="modal-title">OneDrive folder structure</div><div class="modal-sub" id="svSub"></div></div>
+      <button class="x-btn" onclick="document.getElementById('stmtBackdrop').classList.remove('open')">×</button>
+    </div>
+    <div id="svContent"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('stmtBackdrop').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── SEED DATA (from Excel) ──────────────────────────────────────
+const SEED = {"0":{"btl1":{"expected":1300.0,"payments":[{"label":"Betaling 1","amount":1300.0}],"nettStatement":1144.0,"note":""},"btl2":{"expected":995.0,"payments":[{"label":"Betaling 1","amount":995.0}],"nettStatement":875.65,"note":""},"btl3":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":200.0},{"label":"Betaling 2","amount":1200.0}],"nettStatement":1052.0,"note":""},"btl4":{"expected":0,"payments":[],"nettStatement":null,"note":"Expected rent = including MCC bonus this month"},"btl5":{"expected":875.0,"payments":[{"label":"Betaling 1","amount":875.0}],"nettStatement":720.0,"note":"Being sold with tenant in situ (tenant looking to vacate mid March)"},"btl6":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1200.0}],"nettStatement":1056.0,"note":""},"btl7":{"expected":0,"payments":[],"nettStatement":822.81,"note":"Vacant"},"btl8":{"expected":935.01,"payments":[{"label":"Betaling 1","amount":935.01}],"nettStatement":null,"note":""},"btl9":{"expected":1050.0,"payments":[{"label":"Betaling 1","amount":1050.0}],"nettStatement":899.0,"note":""},"btl10":{"expected":0,"payments":[],"nettStatement":null,"note":"Arrears significant £8,358.45 — court hearing 19/12"},"btl11":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant, ready for inspection MCC"},"btl12":{"expected":825.0,"payments":[{"label":"Betaling 1","amount":825.0}],"nettStatement":701.0,"note":""},"btl13":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl14":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":597.42},{"label":"Betaling 2","amount":422.58}],"nettStatement":547.06,"note":""},"btl15":{"expected":1200.0,"payments":[],"nettStatement":null,"note":"MCC TENANT"},"btl16":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl17":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant, ready for inspection MCC"},"btl18":{"expected":1200.0,"payments":[{"label":"Tenant","amount":950.0}],"nettStatement":725.9,"note":"Monthly rent £950 tenant + council top-up £750/quarter"},"btl19":{"expected":1350.0,"payments":[],"nettStatement":null,"note":"MCR City Council tenant (quarterly top-up) — UC set-up, pays previous month"},"btl20":{"expected":800.0,"payments":[{"label":"Betaling 1","amount":800.0}],"nettStatement":800.0,"note":""},"btl21":{"expected":2700.0,"payments":[{"label":"Betaling 1","amount":2700.0}],"nettStatement":2700.0,"note":""},"btl22":{"expected":0,"payments":[],"nettStatement":null,"note":""},"sa1":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""},"sa2":{"expected":2200.0,"payments":[],"nettStatement":null,"note":""},"sa3":{"expected":0,"payments":[],"nettStatement":null,"note":""},"sa4":{"expected":2100.0,"payments":[],"nettStatement":null,"note":""},"sa5":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""}},"1":{"btl1":{"expected":1300.0,"payments":[{"label":"Betaling 1","amount":1300.0}],"nettStatement":799.0,"note":""},"btl2":{"expected":995.0,"payments":[{"label":"Betaling 1","amount":995.0}],"nettStatement":785.6,"note":""},"btl3":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1000.0},{"label":"Betaling 2","amount":200.0}],"nettStatement":1056.0,"note":""},"btl4":{"expected":4984.62,"payments":[{"label":"Betaling 1","amount":4984.62},{"label":"Betaling 2","amount":1200.0}],"nettStatement":5886.92,"note":""},"btl5":{"expected":875.0,"payments":[],"nettStatement":null,"note":"Being sold with tenant in situ"},"btl6":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1200.0}],"nettStatement":691.0,"note":""},"btl7":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl8":{"expected":935.01,"payments":[{"label":"Betaling 1","amount":935.01}],"nettStatement":726.81,"note":""},"btl9":{"expected":1050.0,"payments":[{"label":"Betaling 1","amount":1050.0}],"nettStatement":899.0,"note":""},"btl10":{"expected":0,"payments":[],"nettStatement":null,"note":"Arrears significant £8,358.45 — court hearing 19/12"},"btl11":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant, ready for inspection MCC"},"btl12":{"expected":825.0,"payments":[{"label":"Betaling 1","amount":825.0}],"nettStatement":701.0,"note":""},"btl13":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl14":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":392.43},{"label":"Betaling 2","amount":815.01}],"nettStatement":1037.55,"note":"Tenant leaves 07-03-2026"},"btl15":{"expected":1200.0,"payments":[{"label":"Tenant","amount":950.0},{"label":"Old tenant arrears","amount":635.0},{"label":"MCC top-up","amount":950.0}],"nettStatement":1269.76,"note":"MCC TENANT £950 + £750 top-up/quarter from MCC"},"btl16":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl17":{"expected":4900.0,"payments":[{"label":"MCC","amount":5484.62}],"nettStatement":5484.62,"note":"MCC — ready for inspection"},"btl18":{"expected":1200.0,"payments":[{"label":"Tenant","amount":950.0}],"nettStatement":834.8,"note":"Monthly rent £950 tenant + council top-up £750/quarter"},"btl19":{"expected":1350.0,"payments":[{"label":"Council top-up","amount":805.2},{"label":"UC","amount":950.0}],"nettStatement":1409.42,"note":"MCR City Council top-up received 04-02 (£805.20)"},"btl20":{"expected":800.0,"payments":[{"label":"Betaling 1","amount":800.0}],"nettStatement":800.0,"note":""},"btl21":{"expected":2700.0,"payments":[{"label":"Betaling 1","amount":2700.0}],"nettStatement":2700.0,"note":""},"btl22":{"expected":2850.0,"payments":[{"label":"Betaling 1","amount":2850.0}],"nettStatement":2850.0,"note":""},"sa1":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""},"sa2":{"expected":2200.0,"payments":[],"nettStatement":null,"note":""},"sa3":{"expected":0,"payments":[],"nettStatement":null,"note":""},"sa4":{"expected":2100.0,"payments":[],"nettStatement":null,"note":""},"sa5":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""}},"2":{"btl1":{"expected":1300.0,"payments":[{"label":"Betaling 1","amount":1300.0}],"nettStatement":1144.0,"note":""},"btl2":{"expected":995.0,"payments":[{"label":"Betaling 1","amount":995.0}],"nettStatement":875.6,"note":""},"btl3":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1000.0},{"label":"Betaling 2","amount":200.0}],"nettStatement":966.0,"note":""},"btl4":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1200.0}],"nettStatement":845.88,"note":""},"btl5":{"expected":875.0,"payments":[{"label":"Betaling 1","amount":405.0},{"label":"Betaling 2","amount":874.88},{"label":"Betaling 3","amount":470.0}],"nettStatement":1490.0,"note":"Being sold with tenant in situ"},"btl6":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":1200.0}],"nettStatement":1056.0,"note":""},"btl7":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant — being sold"},"btl8":{"expected":935.01,"payments":[{"label":"Betaling 1","amount":935.01}],"nettStatement":822.81,"note":""},"btl9":{"expected":1050.0,"payments":[{"label":"Betaling 1","amount":1050.0}],"nettStatement":899.0,"note":""},"btl10":{"expected":0,"payments":[],"nettStatement":null,"note":"Arrears significant £8,358.45 — court hearing 19/12"},"btl11":{"expected":4000.0,"payments":[{"label":"MCC","amount":4096.15}],"nettStatement":4096.15,"note":"MCC"},"btl12":{"expected":825.0,"payments":[{"label":"Betaling 1","amount":825.0}],"nettStatement":701.0,"note":""},"btl13":{"expected":0,"payments":[],"nettStatement":701.0,"note":"Vacant"},"btl14":{"expected":1200.0,"payments":[{"label":"Betaling 1","amount":815.01}],"nettStatement":621.21,"note":""},"btl15":{"expected":1200.0,"payments":[{"label":"MCC top-up","amount":750.0},{"label":"Tenant","amount":950.0}],"nettStatement":1466.0,"note":"MCC TENANT"},"btl16":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl17":{"expected":1200.0,"payments":[],"nettStatement":null,"note":""},"btl18":{"expected":1200.0,"payments":[{"label":"Tenant","amount":950.0}],"nettStatement":834.8,"note":"Monthly rent £950 tenant + council top-up £750/quarter"},"btl19":{"expected":1350.0,"payments":[{"label":"UC","amount":991.01}],"nettStatement":844.21,"note":"MCR City Council (£40.01 towards arrears '25)"},"btl20":{"expected":800.0,"payments":[{"label":"Betaling 1","amount":800.0}],"nettStatement":800.0,"note":""},"btl21":{"expected":2700.0,"payments":[{"label":"Betaling 1","amount":2700.0}],"nettStatement":2700.0,"note":""},"btl22":{"expected":2850.0,"payments":[{"label":"Betaling 1","amount":2850.0}],"nettStatement":2850.0,"note":""},"sa1":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""},"sa2":{"expected":2200.0,"payments":[],"nettStatement":null,"note":""},"sa3":{"expected":1750.0,"payments":[],"nettStatement":null,"note":""},"sa4":{"expected":2100.0,"payments":[],"nettStatement":null,"note":""},"sa5":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""}},"3":{"btl1":{"expected":1300.0,"payments":[{"label":"Betaling 1","amount":1300.0}],"nettStatement":1144.0,"note":""},"btl2":{"expected":995.0,"payments":[],"nettStatement":null,"note":""},"btl3":{"expected":1200.0,"payments":[],"nettStatement":null,"note":""},"btl4":{"expected":1200.0,"payments":[],"nettStatement":null,"note":""},"btl5":{"expected":875.0,"payments":[],"nettStatement":null,"note":""},"btl6":{"expected":1200.0,"payments":[],"nettStatement":null,"note":""},"btl7":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl8":{"expected":935.01,"payments":[],"nettStatement":null,"note":""},"btl9":{"expected":1050.0,"payments":[],"nettStatement":null,"note":""},"btl10":{"expected":0,"payments":[],"nettStatement":null,"note":"Arrears significant"},"btl11":{"expected":950.0,"payments":[{"label":"Tenant","amount":875.0}],"nettStatement":525.89,"note":"MCC — tenant £875 + council top-up £225/quarter"},"btl12":{"expected":825.0,"payments":[],"nettStatement":null,"note":""},"btl13":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl14":{"expected":0,"payments":[],"nettStatement":null,"note":""},"btl15":{"expected":1200.0,"payments":[],"nettStatement":null,"note":"MCC TENANT"},"btl16":{"expected":0,"payments":[],"nettStatement":null,"note":"Vacant"},"btl17":{"expected":1200.0,"payments":[],"nettStatement":null,"note":"MCC TENANT"},"btl18":{"expected":1200.0,"payments":[],"nettStatement":null,"note":"Monthly rent £950 tenant + council top-up £750/quarter"},"btl19":{"expected":1350.0,"payments":[],"nettStatement":null,"note":"MCR City Council (quarterly top-up)"},"btl20":{"expected":800.0,"payments":[],"nettStatement":null,"note":""},"btl21":{"expected":2700.0,"payments":[],"nettStatement":null,"note":""},"btl22":{"expected":2850.0,"payments":[],"nettStatement":null,"note":"Vacant"},"sa1":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""},"sa2":{"expected":2200.0,"payments":[],"nettStatement":null,"note":""},"sa3":{"expected":1750.0,"payments":[],"nettStatement":null,"note":""},"sa4":{"expected":2100.0,"payments":[],"nettStatement":null,"note":""},"sa5":{"expected":2000.0,"payments":[],"nettStatement":null,"note":""}}};
+
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const BTL = [
+  {id:'btl1', addr:'15 Manor Road', managed:true},
+  {id:'btl2', addr:'333 Fairfield Road', managed:true},
+  {id:'btl3', addr:'8 Scott Road', managed:true},
+  {id:'btl4', addr:'147 Moorside Street', managed:true},
+  {id:'btl5', addr:'16 Clarence Road', managed:true},
+  {id:'btl6', addr:'46 Scott Road', managed:true},
+  {id:'btl7', addr:'14 Clarence Road', managed:true},
+  {id:'btl8', addr:'18 Moss Bank', managed:true},
+  {id:'btl9', addr:'9 Southfield Close', managed:true},
+  {id:'btl10', addr:'23 Ruskin Road', managed:true},
+  {id:'btl11', addr:'8 Flint Street', managed:true},
+  {id:'btl12', addr:'17 Turner Street', managed:true},
+  {id:'btl13', addr:'11 Scott Road', managed:true},
+  {id:'btl14', addr:'6 Annable Road', managed:true},
+  {id:'btl15', addr:'4 Myrtle Grove', managed:true},
+  {id:'btl16', addr:'378 Greenside Lane', managed:true},
+  {id:'btl17', addr:'21 Hart Street', managed:true},
+  {id:'btl18', addr:'6 Browning Avenue', managed:true},
+  {id:'btl19', addr:'6 Wordsworth Avenue', managed:true},
+  {id:'btl20', addr:'1 Moor Lane', managed:false},
+  {id:'btl21', addr:'28 Woodchurch Rd', managed:false},
+  {id:'btl22', addr:'76 Arkles Lane', managed:false},
+];
+const SA = [
+  {id:'sa1', addr:'23 Kimbolton Close', managed:false},
+  {id:'sa2', addr:'102 Moorside Street', managed:false},
+  {id:'sa3', addr:'1 Moor Lane', managed:false},
+  {id:'sa4', addr:'6 Spindles', managed:false},
+  {id:'sa5', addr:'14 Taylor St.', managed:false},
+];
+const ALL_PROPS = [...BTL.map(p=>({...p,type:'BTL'})), ...SA.map(p=>({...p,type:'SA'}))];
+
+// ─── Supabase config ─────────────────────────────────────────────
+const SB_URL = 'https://abpgyajhqcyvdcbnwcmy.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFicGd5YWpocWN5dmRjYm53Y215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5MjAxOTUsImV4cCI6MjA5MDQ5NjE5NX0.Y6OPi3bPFFc7Vs9-by46nW3vak42TAn7uvqDCIZSG2E';
+const HEADERS = { 'Content-Type': 'application/json', 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY };
+
+async function sbFetch(path, opts={}) {
+  const res = await fetch(SB_URL + '/rest/v1/' + path, { headers: HEADERS, ...opts });
+  if (!res.ok) { const t = await res.text(); console.error('Supabase error:', t); return null; }
+  const ct = res.headers.get('content-type') || '';
+  return ct.includes('json') ? res.json() : null;
+}
+
+// ─── State ───────────────────────────────────────────────────────
+let data = {};
+let currentMonth = new Date().getMonth();
+let editPropId = null;
+let pendingFiles = [];
+let isSaving = false;
+
+// Build seed defaults into memory
+function buildDefaults() {
+  data = {};
+  for (let m = 0; m < 12; m++) {
+    data[m] = {};
+    ALL_PROPS.forEach(p => {
+      const seed = SEED[m] && SEED[m][p.id];
+      data[m][p.id] = seed
+        ? { ...seed, statements: [] }
+        : { expected: (SEED[0]&&SEED[0][p.id])?SEED[0][p.id].expected:0, payments:[], nettStatement:null, note:'', statements:[] };
+    });
+  }
+}
+
+async function initData() {
+  showLoading(true);
+  buildDefaults();
+  // Load all rows from Supabase
+  const rows = await sbFetch('rent_entries?select=*&limit=1000');
+  if (rows && rows.length > 0) {
+    rows.forEach(row => {
+      if (!data[row.month_idx]) data[row.month_idx] = {};
+      data[row.month_idx][row.prop_id] = {
+        expected: parseFloat(row.expected) || 0,
+        payments: row.payments || [],
+        nettStatement: row.nett_statement,
+        note: row.note || '',
+        statements: row.statements || []
+      };
+    });
+  } else {
+    // First load — push seed data to Supabase for months 0-3
+    await pushSeedData();
+  }
+  showLoading(false);
+  buildSidebar();
+  renderAll();
+}
+
+async function pushSeedData() {
+  // Push all seed data (Jan-Apr) to Supabase in one batch
+  const rows = [];
+  for (let m = 0; m <= 3; m++) {
+    ALL_PROPS.forEach(p => {
+      const e = data[m][p.id];
+      rows.push({ month_idx: m, prop_id: p.id, expected: e.expected,
+        payments: e.payments, nett_statement: e.nettStatement, note: e.note, statements: [] });
+    });
+  }
+  await sbFetch('rent_entries', {
+    method: 'POST',
+    body: JSON.stringify(rows),
+    headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' }
+  });
+}
+
+async function persist(monthIdx, propId) {
+  const e = data[monthIdx][propId];
+  const row = { month_idx: monthIdx, prop_id: propId, expected: e.expected,
+    payments: e.payments, nett_statement: e.nettStatement, note: e.note,
+    statements: e.statements || [], updated_at: new Date().toISOString() };
+  await sbFetch('rent_entries?on_conflict=month_idx,prop_id', {
+    method: 'POST',
+    body: JSON.stringify(row),
+    headers: { ...HEADERS, 'Prefer': 'resolution=merge-duplicates' }
+  });
+}
+
+function showLoading(on) {
+  let el = document.getElementById('loadingBar');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loadingBar';
+    el.style.cssText = 'position:fixed;top:0;left:0;right:0;height:3px;background:var(--accent-light);z-index:999;transition:opacity 0.3s';
+    document.body.appendChild(el);
+  }
+  el.style.opacity = on ? '1' : '0';
+}
+
+function getE(m, id) {
+  if (!data[m]) data[m] = {};
+  if (!data[m][id]) {
+    const defExp = (SEED[0]&&SEED[0][id])?SEED[0][id].expected:0;
+    data[m][id] = { expected:defExp, payments:[], nettStatement:null, note:'', statements:[] };
+  }
+  if (!data[m][id].statements) data[m][id].statements = [];
+  return data[m][id];
+}
+
+function totalRec(e) { return (e.payments||[]).reduce((s,p)=>s+(parseFloat(p.amount)||0),0); }
+
+// ─── Sidebar ─────────────────────────────────────────────────────
+function buildSidebar() {
+  document.getElementById('monthNav').innerHTML = MONTHS.map((m,i)=>{
+    const e = data[i] || {};
+    const anyPay = Object.values(e).some(x=>x.payments&&x.payments.length>0);
+    const allOk = anyPay && Object.values(e).filter(x=>x.expected>0).every(x=>{
+      const r=totalRec(x); return Math.abs(r-x.expected)<1;
+    });
+    const dotClass = !anyPay ? '' : allOk ? 'has-data' : 'partial';
+    return `<button class="month-btn${i===currentMonth?' active':''}" onclick="selectMonth(${i})">
+      <span>${m}</span><span class="month-dot ${dotClass}"></span>
+    </button>`;
+  }).join('');
+}
+
+function selectMonth(i) {
+  currentMonth = i;
+  document.getElementById('pageTitle').textContent = MONTHS[i] + ' 2026';
+  buildSidebar();
+  renderAll();
+}
+
+// ─── Render ───────────────────────────────────────────────────────
+function renderAll() { renderSummary(); renderTable(BTL,'btlTable','BTL'); renderTable(SA,'saTable','SA'); renderYear(); }
+
+function fmt(n) {
+  if (n===null||n===undefined||n==='') return '—';
+  return '£'+parseFloat(n).toLocaleString('en-GB',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtPct(pct) {
+  if (pct===null||isNaN(pct)) return '';
+  const sign = pct>0?'+':'';
+  return sign+pct.toFixed(1)+'%';
+}
+
+function renderSummary() {
+  let totExp=0,totRec=0,totNett=0,cntOk=0,cntIssue=0,cntVac=0;
+  ALL_PROPS.forEach(p=>{
+    const e=getE(currentMonth,p.id);
+    const exp=parseFloat(e.expected)||0, rec=totalRec(e), nett=parseFloat(e.nettStatement)||0;
+    totExp+=exp; totRec+=rec;
+    if(e.nettStatement) totNett+=nett;
+    if(exp===0&&rec===0) cntVac++;
+    else if(rec-exp>=-1) cntOk++;
+    else cntIssue++;
+  });
+  const diff=totRec-totExp;
+  document.getElementById('summaryStrip').innerHTML=`
+    <div class="scard"><div class="label">Expected gross</div><div class="val">${fmt(totExp)}</div><div class="sub">all properties</div></div>
+    <div class="scard ${diff>=0?'ok':'warn'}"><div class="label">Received gross</div><div class="val">${fmt(totRec)}</div><div class="sub">${diff>=0?'▲':'▼'} ${fmt(Math.abs(diff))} vs expected</div></div>
+    <div class="scard"><div class="label">Net (statements)</div><div class="val">${fmt(totNett)}</div><div class="sub">from rent statements</div></div>
+    <div class="scard ok"><div class="label">On track</div><div class="val">${cntOk}</div><div class="sub">properties ok</div></div>
+    <div class="scard ${cntIssue>0?'danger':''}"><div class="label">Action needed</div><div class="val">${cntIssue}</div><div class="sub">properties to check</div></div>`;
+}
+
+function renderTable(props, tableId, type) {
+  const head=`<div class="pthead"><span>#</span><span>Address</span><span>Expected</span><span>Received</span><span>Difference</span><span>Net stmt</span><span>Status</span><span></span></div>`;
+  const rows = props.map((prop,idx)=>{
+    const e=getE(currentMonth,prop.id);
+    const exp=parseFloat(e.expected)||0, rec=totalRec(e), diff=rec-exp;
+    const nett=e.nettStatement!==null&&e.nettStatement!==undefined?parseFloat(e.nettStatement):null;
+    const stmts=(e.statements||[]);
+    let pillClass,pillLabel;
+    if(exp===0&&rec===0){pillClass='pill-vacant';pillLabel='Vacant';}
+    else if(rec===0&&exp>0){pillClass='pill-danger';pillLabel='Not received';}
+    else if(Math.abs(diff)<1){pillClass='pill-ok';pillLabel='On track';}
+    else if(diff>0){pillClass='pill-warn';pillLabel='Surplus';}
+    else{pillClass='pill-danger';pillLabel='Shortfall';}
+    const diffColor = diff>0.5?'var(--ok)':diff<-0.5?'var(--danger)':'var(--ink3)';
+    const diffLabel = (exp>0||rec>0) ? ((diff>0?'+':'')+fmt(diff)) : '—';
+    const stmtBadge=stmts.length>0?`<span class="badge badge-stmt" onclick="event.stopPropagation();showStmts('${prop.id}')" title="View statements">📄 ${stmts.length}</span>`:'';
+    const mgrBadge=prop.managed?`<span class="badge badge-mgr">Managed</span>`:'';
+    return `<div class="prow" onclick="openModal('${prop.id}')">
+      <span class="num">${idx+1}</span>
+      <span class="addr"><span>${prop.addr}</span><span class="badges">${mgrBadge}${stmtBadge}</span></span>
+      <span class="mono">${exp>0?fmt(exp):'—'}</span>
+      <span class="mono">${rec>0?fmt(rec):'—'}</span>
+      <span class="mono" style="color:${diffColor}">${diffLabel}</span>
+      <span class="mono">${nett!==null?fmt(nett):'—'}</span>
+      <span><span class="pill ${pillClass}">${pillLabel}</span></span>
+      <span><button class="enter-btn">Enter</button></span>
+    </div>`;
+  }).join('');
+  document.getElementById(tableId).innerHTML=head+rows;
+}
+
+let chartBruto=null, chartNetto=null, chartCombo=null;
+
+function renderYear() {
+  const monthly = MONTHS.map((_,i)=>{
+    let bruto=0,netto=0;
+    ALL_PROPS.forEach(p=>{
+      const e=getE(i,p.id);
+      bruto+=totalRec(e);
+      if(e.nettStatement) netto+=parseFloat(e.nettStatement)||0;
+    });
+    return {bruto,netto};
+  });
+  const maxBruto=Math.max(...monthly.map(m=>m.bruto),1);
+
+  document.getElementById('yearGrid').innerHTML=MONTHS.map((m,i)=>{
+    const {bruto,netto}=monthly[i];
+    const prev=i>0?monthly[i-1]:null;
+    const deltaBruto=prev&&prev.bruto>0?(bruto-prev.bruto)/prev.bruto*100:null;
+    const deltaNetto=prev&&prev.netto>0?(netto-prev.netto)/prev.netto*100:null;
+    const pctBar=(bruto/maxBruto*100).toFixed(1);
+    const dBClass=deltaBruto===null?'delta-flat':deltaBruto>0?'delta-up':'delta-down';
+    const dNClass=deltaNetto===null?'delta-flat':deltaNetto>0?'delta-up':'delta-down';
+    return `<div class="mcard${i===currentMonth?' active':''}" onclick="selectMonth(${i})">
+      <div class="mname">${m} 2026</div>
+      <div class="mvals">
+        <div>
+          <div class="mv-label">Bruto</div>
+          <div class="mv-val">${bruto>0?fmt(bruto):'—'}</div>
+          <div class="mv-delta ${dBClass}">${deltaBruto!==null?fmtPct(deltaBruto):'first month'}</div>
+        </div>
+        <div>
+          <div class="mv-label">Net</div>
+          <div class="mv-val">${netto>0?fmt(netto):'—'}</div>
+          <div class="mv-delta ${dNClass}">${deltaNetto!==null?fmtPct(deltaNetto):netto>0?'—':'no data'}</div>
+        </div>
+      </div>
+      <div class="mbar"><div class="mbar-fill" style="width:${pctBar}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Build charts after DOM is ready
+  setTimeout(()=>buildCharts(monthly), 50);
+}
+
+function buildCharts(monthly) {
+  if(typeof Chart === 'undefined') return;
+  const labels = MONTHS.map(m=>m.slice(0,3));
+  const brutoData = monthly.map(m=>Math.round(m.bruto*100)/100);
+  const nettoData = monthly.map(m=>Math.round(m.netto*100)/100);
+  const accent = '#2d6048';
+  const accentLight = 'rgba(45,96,72,0.15)';
+  const nettColor = '#5ecb8a';
+  const nettLight = 'rgba(94,203,138,0.15)';
+  const gridColor = 'rgba(0,0,0,0.06)';
+  const tickColor = '#999';
+
+  const baseOpts = {
+    responsive:true, maintainAspectRatio:true,
+    plugins:{ legend:{display:false}, tooltip:{
+      callbacks:{ label: ctx=>'£'+ctx.raw.toLocaleString('en-GB',{minimumFractionDigits:2}) }
+    }},
+    scales:{
+      x:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:11,family:'Plus Jakarta Sans'}} },
+      y:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:11,family:'Plus Jakarta Sans'},
+        callback:v=>'£'+Math.round(v).toLocaleString('en-GB')} }
+    }
+  };
+
+  // Bruto bar chart
+  if(chartBruto) chartBruto.destroy();
+  chartBruto = new Chart(document.getElementById('chartBruto'), {
+    type:'bar',
+    data:{ labels, datasets:[{
+      data:brutoData,
+      backgroundColor: labels.map((_,i)=> i===currentMonth ? accent : accentLight),
+      borderColor: accent, borderWidth:1.5, borderRadius:5
+    }]},
+    options:{ ...baseOpts }
+  });
+
+  // Netto bar chart
+  if(chartNetto) chartNetto.destroy();
+  chartNetto = new Chart(document.getElementById('chartNetto'), {
+    type:'bar',
+    data:{ labels, datasets:[{
+      data:nettoData,
+      backgroundColor: labels.map((_,i)=> i===currentMonth ? nettColor : nettLight),
+      borderColor: nettColor, borderWidth:1.5, borderRadius:5
+    }]},
+    options:{ ...baseOpts }
+  });
+
+  // Combo line chart
+  if(chartCombo) chartCombo.destroy();
+  chartCombo = new Chart(document.getElementById('chartCombo'), {
+    type:'line',
+    data:{ labels, datasets:[
+      { label:'Gross', data:brutoData, borderColor:accent, backgroundColor:accentLight,
+        fill:true, tension:0.35, pointRadius:4, pointBackgroundColor:accent, borderWidth:2 },
+      { label:'Net', data:nettoData, borderColor:nettColor, backgroundColor:nettLight,
+        fill:true, tension:0.35, pointRadius:4, pointBackgroundColor:nettColor, borderWidth:2 }
+    ]},
+    options:{
+      responsive:true, maintainAspectRatio:true,
+      plugins:{ legend:{ display:true, position:'top',
+        labels:{color:'#383838',font:{size:12,family:'Plus Jakarta Sans'},boxWidth:12,borderRadius:3}
+      }, tooltip:{
+        callbacks:{ label: ctx=>`${ctx.dataset.label}: £`+ctx.raw.toLocaleString('en-GB',{minimumFractionDigits:2}) }
+      }},
+      scales:{
+        x:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:11,family:'Plus Jakarta Sans'}} },
+        y:{ grid:{color:gridColor}, ticks:{color:tickColor,font:{size:11,family:'Plus Jakarta Sans'},
+          callback:v=>'£'+Math.round(v).toLocaleString('en-GB')} }
+      }
+    }
+  });
+}
+
+// ─── Modal ────────────────────────────────────────────────────────
+function openModal(propId) {
+  const fromTopbar = !propId;
+  editPropId = propId || ALL_PROPS[0].id;
+
+  // Build / show selector
+  const wrap = document.getElementById('propSelectorWrap');
+  const sel = document.getElementById('propSelector');
+  if (fromTopbar) {
+    sel.innerHTML = ALL_PROPS.map(p =>
+      `<option value="${p.id}" ${p.id===editPropId?'selected':''}>[${p.type}] ${p.addr}</option>`
+    ).join('');
+    wrap.style.display = '';
+  } else {
+    wrap.style.display = 'none';
+  }
+
+  loadPropIntoModal(editPropId);
+  document.getElementById('backdrop').classList.add('open');
+}
+
+function switchProp(propId) {
+  editPropId = propId;
+  loadPropIntoModal(propId);
+}
+
+function loadPropIntoModal(propId) {
+  const prop = ALL_PROPS.find(p=>p.id===propId);
+  const e = getE(currentMonth, propId);
+  pendingFiles = [...(e.statements||[])];
+
+  document.getElementById('mTitle').textContent = prop.addr;
+  document.getElementById('mSub').textContent = `${prop.type} · ${MONTHS[currentMonth]} 2026${prop.managed?' · Managed':''}`;
+  document.getElementById('fExp').value = e.expected||'';
+  document.getElementById('fNett').value = e.nettStatement!==null&&e.nettStatement!==undefined?e.nettStatement:'';
+  document.getElementById('fNote').value = e.note||'';
+
+  const rows=document.getElementById('payRows');
+  rows.innerHTML='';
+  const pays=e.payments&&e.payments.length>0?e.payments:[{label:'Tenant',amount:''}];
+  pays.forEach(p=>addPayRow(p.label,p.amount));
+
+  renderPendingFiles();
+  recalc();
+}
+
+function addPayRow(label='',amount='') {
+  const row=document.createElement('div');
+  row.className='pay-row';
+  row.innerHTML=`
+    <input type="text" class="fi pay-lbl" placeholder="E.g. Tenant, UC, Council..." value="${label}" oninput="recalc()">
+    <input type="number" class="fi pay-amt" placeholder="£0.00" value="${amount||''}" oninput="recalc()">
+    <button class="rm-btn" onclick="this.closest('.pay-row').remove();recalc()">×</button>`;
+  document.getElementById('payRows').appendChild(row);
+}
+
+function recalc() {
+  const exp=parseFloat(document.getElementById('fExp').value)||0;
+  const amts=[...document.querySelectorAll('.pay-amt')].map(i=>parseFloat(i.value)||0);
+  const bruto=amts.reduce((s,a)=>s+a,0);
+  const diff=bruto-exp;
+  const nett=parseFloat(document.getElementById('fNett').value)||null;
+
+  document.getElementById('rBruto').textContent=fmt(bruto);
+  const diffEl=document.getElementById('rDiff');
+  if(exp>0){
+    diffEl.textContent=(diff>=0?'+':'')+fmt(diff);
+    diffEl.className='rv '+(diff>=0?'ok':diff<0?'danger':'warn');
+  } else { diffEl.textContent='—'; diffEl.className='rv'; }
+  document.getElementById('rNett2').textContent=nett?fmt(nett):'—';
+}
+
+async function saveEntry() {
+  const e=getE(currentMonth,editPropId);
+  e.expected=parseFloat(document.getElementById('fExp').value)||0;
+  e.note=document.getElementById('fNote').value;
+  const nv=document.getElementById('fNett').value;
+  e.nettStatement=nv!==''?parseFloat(nv):null;
+  e.payments=[...document.querySelectorAll('.pay-row')].map(r=>({
+    label:r.querySelector('.pay-lbl').value,
+    amount:parseFloat(r.querySelector('.pay-amt').value)||0
+  })).filter(p=>p.amount>0||p.label);
+  e.statements=[...pendingFiles];
+
+  showLoading(true);
+  await persist(currentMonth, editPropId);
+  showLoading(false);
+  closeModal();
+  renderAll();
+  buildSidebar();
+}
+
+function closeModal() { document.getElementById('backdrop').classList.remove('open'); }
+function closeBackdrop(ev) { if(ev.target===document.getElementById('backdrop')) closeModal(); }
+
+// ─── File handling ────────────────────────────────────────────────
+function buildOneDrivePath(propId, filename) {
+  const prop=ALL_PROPS.find(p=>p.id===propId);
+  const month=MONTHS[currentMonth];
+  const type=prop.type;
+  const addr=prop.addr.replace(/[<>:"/\\|?*]/g,'').trim();
+  return `B&R Assets/2026/${month}/${type}/${addr}/${filename}`;
+}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{
+  e.preventDefault(); dz.classList.remove('drag-over');
+  handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+  const prop = ALL_PROPS.find(p=>p.id===editPropId);
+  const isSA = prop && prop.type === 'SA';
+
+  [...files].forEach(f=>{
+    const path = buildOneDrivePath(editPropId, f.name);
+    if(!pendingFiles.find(x=>x.name===f.name)) {
+      pendingFiles.push({name:f.name, size:f.size, path, date:new Date().toISOString(), isSAShared: isSA});
+    }
+  });
+  document.getElementById('fileInput').value='';
+  renderPendingFiles();
+}
+
+async function linkStatementToAllSA(filename) {
+  SA.forEach(p => {
+    const e = getE(currentMonth, p.id);
+    if (!e.statements) e.statements = [];
+    const path = buildOneDrivePath(p.id, filename);
+    if (!e.statements.find(s=>s.name===filename)) {
+      e.statements.push({name:filename, path, date:new Date().toISOString(), isSAShared:true});
+    }
+  });
+  showLoading(true);
+  await Promise.all(SA.map(p => persist(currentMonth, p.id)));
+  showLoading(false);
+  renderAll();
+  pendingFiles = pendingFiles.map(f => f.name===filename ? {...f, linkedToAll:true} : f);
+  renderPendingFiles();
+}
+
+function renderPendingFiles() {
+  const list = document.getElementById('stmtList');
+  const prop = ALL_PROPS.find(p=>p.id===editPropId);
+  const isSA = prop && prop.type === 'SA';
+  if (!pendingFiles.length) { list.innerHTML=''; return; }
+  list.innerHTML = pendingFiles.map((f,i) => {
+    const saLinkBanner = (isSA && !f.linkedToAll) ? `
+      <div class="sa-link-banner" style="margin-top:8px">
+        <div>
+          <div class="sa-link-text">SA portfolio statement</div>
+          <div class="sa-link-sub">Link to all 5 SA properties at once</div>
+        </div>
+        <button class="btn-link-all" onclick="linkStatementToAllSA('${f.name}')">Link to all SAs</button>
+      </div>` : (f.linkedToAll ? `<div style="font-size:11px;color:var(--ok);margin-top:6px;font-weight:600">✓ Linked to all 5 SA properties</div>` : '');
+    return `<div class="stmt-item" style="flex-direction:column;align-items:flex-start">
+      <div style="display:flex;width:100%;align-items:center;justify-content:space-between">
+        <div>
+          <div class="stmt-name">📄 ${f.name}</div>
+          <div class="stmt-path">OneDrive: ${f.path}</div>
+        </div>
+        <button class="stmt-rm" onclick="pendingFiles.splice(${i},1);renderPendingFiles()" title="Verwijderen">×</button>
+      </div>
+      ${saLinkBanner}
+    </div>`;
+  }).join('');
+}
+
+function showStmts(propId) {
+  const e=getE(currentMonth,propId);
+  const prop=ALL_PROPS.find(p=>p.id===propId);
+  const stmts=e.statements||[];
+  document.getElementById('svSub').textContent=`${prop.addr} · ${MONTHS[currentMonth]} 2026`;
+  document.getElementById('svContent').innerHTML = stmts.length===0
+    ? '<p style="color:var(--ink3);font-size:13px">No statements linked.</p>'
+    : stmts.map(f=>`
+      <div style="margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:4px">📄 ${f.name}</div>
+        <div class="onedrive-path">
+          <strong>OneDrive path:</strong><br>${f.path}
+        </div>
+        <div style="font-size:11px;color:var(--ink3);font-family:var(--mono)">${f.date?new Date(f.date).toLocaleDateString('en-GB',{dateStyle:'medium'}):'date unknown'}</div>
+      </div>`).join('');
+  document.getElementById('stmtBackdrop').classList.add('open');
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────
+function switchTab(tab,btn) {
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-props').style.display=tab==='props'?'':'none';
+  document.getElementById('tab-year').style.display=tab==='year'?'':'none';
+  if(tab==='year') renderYear();
+}
+
+// ─── Export ───────────────────────────────────────────────────────
+function exportCSV() {
+  let csv='Type,Address,Managed,Expected,Received,Difference,Net Statement,Payments,Statements,Notes\n';
+  ALL_PROPS.forEach(p=>{
+    const e=getE(currentMonth,p.id);
+    const exp=parseFloat(e.expected)||0, rec=totalRec(e);
+    const pays=(e.payments||[]).map(x=>`${x.label}: £${x.amount}`).join(' | ');
+    const stmts=(e.statements||[]).map(s=>s.name).join(' | ');
+    csv+=`"${p.type}","${p.addr}","${p.managed?'Yes':'No'}","${exp}","${rec}","${rec-exp}","${e.nettStatement||''}","${pays}","${stmts}","${(e.note||'').replace(/"/g,'""')}"\n`;
+  });
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download=`BR_Assets_${MONTHS[currentMonth]}_2026.csv`;
+  a.click();
+}
+
+// ─── Init ─────────────────────────────────────────────────────────
+initData();
+</script>
+</body>
+</html>
